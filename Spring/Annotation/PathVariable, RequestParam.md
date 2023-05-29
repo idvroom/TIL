@@ -1,4 +1,4 @@
-# Parameter
+# Handler Methods
 
 Srping version: 5.3.14
 
@@ -121,6 +121,7 @@ required = true: 값이 없으면 에러 발생하지만 defaultValue를 지정�
 구글 검색 하여 해외쪽 자료 참고, 국내는 다 비슷하다..<br>
 query string vs path variable
 
-//ModelAttribute 정리 필요
+---
 
-[@ModelAttribute 장점](https://galid1.tistory.com/769)
+더 많은 항목 <br>
+https://docs.spring.io/spring-framework/reference/web/webmvc/mvc-controller/ann-methods.html
