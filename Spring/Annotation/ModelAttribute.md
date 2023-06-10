@@ -134,11 +134,11 @@ public void getValid(@RequestParam @Min(3) int id) {
 
 @Validated<br>
 
-[참고 및 읽어볼만한](https://ojt90902.tistory.com/673)<br>
+[참고 자료이고 설명 잘 되어 있다](https://ojt90902.tistory.com/673)<br>
 
 group 사용법<br>
 size는 저장, 수정 시에 필수값이다.<br>
-size는 저장 시에만 10이하로 저장해야하고 수정 시는 자유롭게 지정된다.<br>
+size는 저장 시에만 10이하로 저장해야하고 수정 시는 자유롭게 지정 가능하다.<br>
 
 ```java
 
