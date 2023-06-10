@@ -120,5 +120,12 @@ public void getTestModel(@ModelAttribute @Valid ParamVO vo, BindingResult result
   //result.hasErrors() 로 처리
 }
 
+//단일 파라미터 처리
+//class 상단에 @Validated
+//https://www.baeldung.com/spring-validate-requestparam-pathvariable
+@RequestMapping(value="/test/valid")
+public void getValid(@RequestParam @Min(3) int id) {
+    //http://localhost:8081/test/valid?id=2 -> getValid.id: 3 이상이어야 합니다
+}
 
 ```
