@@ -129,3 +129,50 @@ public void getValid(@RequestParam @Min(3) int id) {
 }
 
 ```
+
+---
+
+@Validated<br>
+
+[참고 및 읽어볼만한](https://ojt90902.tistory.com/673)<br>
+
+group 사용법<br>
+size는 저장, 수정 시에 필수값이다.<br>
+size는 저장 시에만 10이하로 저장해야하고 수정 시는 자유롭게 지정된다.<br>
+
+```java
+
+//그룹 분리용 인터페이스
+public interface Insert {
+}
+public interface Update {
+}
+
+@Data
+public class ParamVO {
+    @NotNull(groups = {Insert.class, Update.class})
+    @Max(value = 10, groups = Insert.class)
+    private int size;
+}
+
+@RequestMapping(value="/test/model/insert")
+public void validatedInsert(@Validated(Insert.class) @ModelAttribute ParamVO vo, BindingResult result) {
+    //http://localhost:8081/test/model/insert?size=100
+    //->10 이하여야 합니다
+    if(result.hasErrors()) {
+        System.out.println(result.getFieldError());
+    }
+    //System.out.println(vo);
+}
+
+@RequestMapping(value="/test/model/update")
+public void validatedUpdate(@Validated(Update.class) @ModelAttribute ParamVO vo, BindingResult result) {
+    //http://localhost:8081/test/model/update?size=100
+    //-> 정상적으로 동작
+    if(result.hasErrors()) {
+        System.out.println(result.getFieldError());
+    }
+    //System.out.println(vo);
+}
+
+```
