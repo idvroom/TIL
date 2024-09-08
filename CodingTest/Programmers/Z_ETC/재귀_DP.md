@@ -159,9 +159,9 @@ naiveRecursion(5)
     └── naiveRecursion(1) = 1
 ```
 
-[설명링크1](https://adjh54.tistory.com/201#google_vignette)
-바텀업
+[참조링크1](https://adjh54.tistory.com/201#google_vignette)
 ```java
+바텀업
 private int dp(int n) {
    if (n <= 1) {
       return n;
@@ -196,7 +196,7 @@ public int fib(int n) {
 
 ```
 
-[설명링크2](https://hongjw1938.tistory.com/47)
+[참조링크2](https://hongjw1938.tistory.com/47)
 ```java
 class Fibonacci{
     // DP 를 사용 시 작은 문제의 결과값을 저장하는 배열
