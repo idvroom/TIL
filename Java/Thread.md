@@ -1,3 +1,8 @@
+
+#### 참고 서적
+- [이것이 자바다 3판 (신용권, 임경균. 이것이 자바다. 한빛미디어, 2024.)](https://product.kyobobook.co.kr/detail/S000212853100) <br>
+내용과 소스는 내가 보기 편하게 작성
+--- 
 # Thread
 
 ### 생성
@@ -214,5 +219,259 @@ public class ThreadTest {
 ```
 - wait(), notify() 사용
   - t1 작업 완료 -> notify() 호출하여 일시 정지 되어 있는 다른 Thread를 실행 대기 상태로 -> t1은 wait()을 호출하여 일시정지로 상태로
-> 동기화 메소드, 동기화 블록 내에서만 사용 가능하다.
+  - 동기화 메소드, 동기화 블록 내에서만 사용 가능하다.
 
+추가 확인!!
+왜 synchronized를 해야하는가??
+다른 스레드를 실행 대기로는 랜덤인가??
+
+```java
+//Thread가 번갈아가면서 실행하는 코드
+class Work {
+    public synchronized void methodA() {
+        System.out.println(Thread.currentThread().getName() + ": 실행");
+        notify(); //다른 스레드를 실행 대기로
+        try {
+            wait(); //자신은 일시 정지로
+        } catch (InterruptedException e) {
+            
+        }
+    }
+
+    public synchronized void methodB() {
+        System.out.println(Thread.currentThread().getName() + ": 실행");
+        notify(); //다른 스레드를 실행 대기로
+        try {
+            wait(); //자신은 일시 정지로
+        } catch (InterruptedException e) {
+            
+        }
+    }
+}
+class MainThread1 extends Thread {
+    private Work work;
+    
+    public MainThread1(Work work) {
+        this.work = work;
+    }
+    
+    @Override
+    public void run() {
+        for (int i = 0; i < 10; i++) {
+            work.methodA();
+        }
+    }
+}
+
+class MainThread2 extends Thread {
+    private Work work;
+    
+    public MainThread2(Work work) {
+        this.work = work;
+    }
+    
+    @Override
+    public void run() {
+        for (int i = 0; i < 10; i++) {
+            work.methodB();
+        }
+    }
+}
+
+public class ThreadTest {    
+    public static void main(String[] args) {
+        Work work = new Work();
+        MainThread1 main1 = new MainThread1(work);
+        MainThread2 main2 = new MainThread2(work);
+        
+        main1.start();
+        main2.start();
+    }
+}
+
+Thread-0: 실행
+Thread-1: 실행
+Thread-0: 실행
+Thread-1: 실행
+....
+```
+
+4. Thread 종료
+- flag 사용
+```java
+class StopThread extends Thread {
+    private boolean stop;
+    
+    @Override
+    public void run() {
+        while (!stop) {
+            System.out.println("동작 중");
+        }
+        System.out.println("정리 중지 됨");
+    }
+    
+    public void setStop(boolean b) {
+        this.stop = b;
+    }
+}
+
+public class ThreadTest {    
+    public static void main(String[] args) {
+        StopThread t = new StopThread();
+        t.start();
+        
+        try {
+            Thread.sleep(1000);
+        } catch (InterruptedException e) {
+        }
+        
+        t.setStop(true);
+    }
+}
+```
+- interrupt()
+  - 실행 대기/실행 상태일 때는 interrupt()가 호출 되어도 InterruptedException 미발생
+  - 어떤 이유로 일시 정지 상태가 되면 InterruptedException 발생
+  <br>
+  추가 확인!! 뭐가 좋은거지.//
+```java
+//sleep() 사용 (일시 정지로 만든다)
+class StopThread extends Thread {    
+    @Override
+    public void run() {
+        try {
+            while (true) {
+                System.out.println("동작 중");
+                Thread.sleep(1); //일시 정지로 만들 수 있게 호출해야함
+            }                
+        } catch (InterruptedException e) {
+        }
+        
+        System.out.println("정리 중지 됨");
+    }
+}
+
+public class ThreadTest {    
+    public static void main(String[] args) {
+        StopThread t = new StopThread();
+        t.start();
+        
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+        }
+        
+        t.interrupt();
+    }
+}
+```
+
+``` java
+//일시 정지를 만들지 않고 사용하는 법
+class StopThread extends Thread {        
+    @Override
+    public void run() {
+        while (true) {
+            System.out.println("동작 중");
+
+            ////interrupt 가 호출 되었는지 확인
+            //정적 메소드
+            if (Thread.interrupted()) {
+                break;
+            }
+            //인스턴스 메소드
+            if (Thread.currentThread().isInterrupted()) {
+                break;
+            }
+            ////
+        }     
+        
+        System.out.println("정리 중지 됨");
+    }
+}
+
+public class ThreadTest {    
+    public static void main(String[] args) {
+        StopThread t = new StopThread();
+        t.start();
+        
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+        }
+        
+        t.interrupt();
+    }
+}
+```
+
+5. daemon 쓰레드
+- 자동 저장 되다가 main이 종료되면 DaemonThreadTest도 같이 종료 된다.
+
+확인
+thread2개를 실행해서.. 자식thread로?
+
+```java
+class DaemonThreadTest extends Thread {    
+    public void save() {
+        System.out.println(Thread.currentThread().getName() + ": 자동 저장!!");
+    }
+    
+    @Override
+    public void run() {
+        while (true) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                break;
+            }
+            save();
+        }
+    }
+}
+
+public class ThreadTest {    
+    public static void main(String[] args) {
+        DaemonThreadTest t = new DaemonThreadTest();
+        t.setDaemon(true); // 빼면 main이 종료되어도 DaemonThreadTest는 계속 실행
+        t.start();
+        
+        try {
+            Thread.sleep(3000);
+        } catch (InterruptedException e) {
+        }
+        
+        System.out.println(Thread.currentThread().getName() + ": main 종료");
+    }
+}
+```
+
+6. 스레드풀
+
+생성, 종료
+```java
+//=========생성
+//코어 스레드: 스레드가 증가되고 사용하지 않는 스레드에서 제거할 때 유지하는 최소 쓰레스
+ExecutorService executorService1 = Executors.newCachedThreadPool();
+//초기 스레드, 코어 0, 작업 개수가 많아지면 새 스레드 생성, 60초 동안 작업을 하지 않으면 풀에서 제거, 최대 int max
+
+ExecutorService executorService2 = Executors.newFixedThreadPool(5);
+//초기 스레드 0, 작업 개수가 많아지면 최대 5개까지, 생성된 스레드를 제거하지 않는다.
+
+ExecutorService pool = new ThreadPoolExecutor(
+        5,  //코어 스레드수
+        10, //최대 스레드수
+        100L, //놀고 있는 시간
+        TimeUnit.SECONDS, //시간 단위
+        new SynchronousQueue<Runnable>() //작업큐
+);
+
+
+//========= 종료
+//남아있는 작업을 마무리하고 종료(작업 큐도 포함)
+executorService1.shutdown();
+//현재 작업 중지 + 스레드풀 종료, 리턴값은 작업큐에 미처리된 작업
+List<Runnable> list = executorService1.shutdownNow();
+```
+
+실제 작업 예시
