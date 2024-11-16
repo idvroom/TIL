@@ -448,30 +448,109 @@ public class ThreadTest {
 
 6. 스레드풀
 
-생성, 종료
+- 생성, 종료
+    ```java
+    //=========생성
+    //코어 스레드: 스레드가 증가되고 사용하지 않는 스레드에서 제거할 때 유지하는 최소 쓰레스
+    ExecutorService executorService1 = Executors.newCachedThreadPool();
+    //초기 스레드, 코어 0, 작업 개수가 많아지면 새 스레드 생성, 60초 동안 작업을 하지 않으면 풀에서 제거, 최대 int max
+
+    ExecutorService executorService2 = Executors.newFixedThreadPool(5);
+    //초기 스레드 0, 작업 개수가 많아지면 최대 5개까지, 생성된 스레드를 제거하지 않는다.
+
+    ExecutorService pool = new ThreadPoolExecutor(
+            5,  //코어 스레드수
+            10, //최대 스레드수
+            100L, //놀고 있는 시간
+            TimeUnit.SECONDS, //시간 단위
+            new SynchronousQueue<Runnable>() //작업큐
+    );
+
+
+    //========= 종료
+    //남아있는 작업을 마무리하고 종료(작업 큐도 포함)
+    executorService1.shutdown();
+    //현재 작업 중지 + 스레드풀 종료, 리턴값은 작업큐에 미처리된 작업
+    List<Runnable> list = executorService1.shutdownNow();
+    ```
+
+- 실제 작업 예시
 ```java
-//=========생성
-//코어 스레드: 스레드가 증가되고 사용하지 않는 스레드에서 제거할 때 유지하는 최소 쓰레스
-ExecutorService executorService1 = Executors.newCachedThreadPool();
-//초기 스레드, 코어 0, 작업 개수가 많아지면 새 스레드 생성, 60초 동안 작업을 하지 않으면 풀에서 제거, 최대 int max
-
-ExecutorService executorService2 = Executors.newFixedThreadPool(5);
-//초기 스레드 0, 작업 개수가 많아지면 최대 5개까지, 생성된 스레드를 제거하지 않는다.
-
-ExecutorService pool = new ThreadPoolExecutor(
-        5,  //코어 스레드수
-        10, //최대 스레드수
-        100L, //놀고 있는 시간
-        TimeUnit.SECONDS, //시간 단위
-        new SynchronousQueue<Runnable>() //작업큐
-);
-
-
-//========= 종료
-//남아있는 작업을 마무리하고 종료(작업 큐도 포함)
-executorService1.shutdown();
-//현재 작업 중지 + 스레드풀 종료, 리턴값은 작업큐에 미처리된 작업
-List<Runnable> list = executorService1.shutdownNow();
+//작업 결과를 리턴하지 않는 방식
+public static void main(String[] args) {
+    String[][] mails = new String[1000][3];
+    for (int i = 0; i < mails.length; i++) {
+        mails[i][0] = "보내는 사람";
+        mails[i][1] = "받는 사람: " + i;
+    }
+    
+    ExecutorService service = Executors.newFixedThreadPool(5);
+    
+    for (int i = 0; i < mails.length; i++) {
+        final int idx = i;
+        
+        service.execute(new Runnable() {                
+            @Override
+            public void run() {
+                String name = Thread.currentThread().getName();
+                System.out.println("[" + name + "] " + mails[idx][0] + "==>" + mails[idx][1]);
+            }
+        });
+    }
+    
+    service.shutdown();        
+}
+/*
+...
+[pool-1-thread-1] 보내는 사람==>받는 사람: 355
+[pool-1-thread-5] 보내는 사람==>받는 사람: 882
+[pool-1-thread-2] 보내는 사람==>받는 사람: 880
+[pool-1-thread-4] 보내는 사람==>받는 사람: 879
+...
+*/
 ```
 
-실제 작업 예시
+```java
+//작업 결과를 리턴
+public static void main(String[] args) {        
+    ExecutorService service = Executors.newFixedThreadPool(5);
+    
+    for (int i = 0; i < 100; i++) {
+        final int idx = i;
+        Future<Integer> future = service.submit(new Callable<Integer>() {
+
+            @Override
+            public Integer call() throws Exception {
+                int sum = 0;
+                for (int i = 0; i < idx; i++) {
+                    sum += i;
+                }
+                
+                System.out.println("[" + Thread.currentThread().getName() + "] 1 ~ " + idx + " 합 계산");
+                return sum;
+            }
+        });
+        
+        try {
+            int result = future.get();
+            System.out.println("리턴 값: " + result);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+    
+    service.shutdown();        
+}
+/*
+....
+[pool-1-thread-3] 1 ~ 67 합 계산
+리턴 값: 2211
+[pool-1-thread-4] 1 ~ 68 합 계산
+리턴 값: 2278
+[pool-1-thread-5] 1 ~ 69 합 계산
+리턴 값: 2346
+[pool-1-thread-1] 1 ~ 70 합 계산
+리턴 값: 2415
+....
+*/
+```
