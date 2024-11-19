@@ -333,7 +333,6 @@ public class ThreadTest {
   - 실행 대기/실행 상태일 때는 interrupt()가 호출 되어도 InterruptedException 미발생
   - 어떤 이유로 일시 정지 상태가 되면 InterruptedException 발생
   <br>
-  추가 확인!! 뭐가 좋은거지.//
 ```java
 //sleep() 사용 (일시 정지로 만든다)
 class StopThread extends Thread {    
@@ -608,9 +607,6 @@ public class ThreadTest {
 ```
 5. daemon 쓰레드
 - 자동 저장 되다가 main이 종료되면 DaemonThreadTest도 같이 종료 된다.
-
-확인
-thread2개를 실행해서.. 자식thread로?
 
 ```java
 class DaemonThreadTest extends Thread {    
