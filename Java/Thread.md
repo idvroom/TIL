@@ -405,6 +405,207 @@ public class ThreadTest {
 }
 ```
 
+* 내가 보기 쉽게 추가 코드
+```java
+//isInterrupted 로 중지 확인
+class MainThread extends Thread {
+    @Override
+    public void run() {
+        for (int i = 0; i < 10000; i++) {
+            System.out.println("index: " + i);
+            
+            //이 코드가 없다면 interrupt를 해도 중지 되지 않는다.
+            //실행 대기/실행 상태는 InterruptedException가 미발생하기 때문
+            //true면 interrupt 가 호출 되었는지 확인
+            if (Thread.currentThread().isInterrupted()) {
+                System.out.println("Thread 내부에서 상태: " + Thread.currentThread().getState()); //RUNNABLE
+                System.out.println("stop");
+                break;
+            }
+        }
+    }
+}
+
+public class ThreadTest {    
+    public static void main(String[] args) {   
+        MainThread t = new MainThread();
+        System.out.println("시작 전: " + t.getState()); //NEW
+        t.start();        
+        System.out.println("시작 후: " + t.getState()); //RUNNABLE
+        System.out.println("인터럽트 호출 전 인터럽트 값: " + t.isInterrupted()); //false
+        
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+        }
+        t.interrupt();
+        System.out.println("인터럽트 호출 후 상태: " + t.getState()); //RUNNABLE
+        System.out.println("인터럽트 호출 후 인터럽트 값: " + t.isInterrupted()); //true
+        
+        //RUNNABLE에서 TERMINATED 또는 상태가 변화는지 확인용
+        while (true) {
+            if (t.getState() != Thread.State.RUNNABLE) {
+                System.out.println("end: " + t.getState()); //TERMINATED
+                break;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }            
+        }
+    }
+}
+
+//결과
+/*
+시작 전: NEW
+시작 후: RUNNABLE
+인터럽트 호출 전 인터럽트 값: false
+index: 0
+index: 1
+index: 2
+index: 3
+index: 4
+index: 5
+index: 6
+index: 7
+index: 8
+....
+index: 3275
+인터럽트 호출 후 상태: RUNNABLE
+Thread 내부에서 상태: RUNNABLE
+stop
+인터럽트 호출 후 인터럽트 값: true
+end: TERMINATED
+*/
+```
+
+```java
+//sleep으로 중지
+class MainThread extends Thread {
+    @Override
+    public void run() {
+        for (int i = 0; i < 100000; i++) {
+            System.out.println("index: " + i);
+                        
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                System.out.println("InterruptedException 발생 시 상태: " + Thread.currentThread().getState()); //RUNNABLE
+                System.out.println("InterruptedException 발생 시 인터럽트 값: " + Thread.currentThread().isInterrupted()); //sleep 상태에서 interrupt를 호출하면 InterruptedException가 발생하고 isInterrupted는 false임
+                System.out.println("InterruptedException 발생!!!");
+                Thread.currentThread().interrupt(); //호출 이유: 위의 이유로 isInterrupted는 false가 된다. 상위 코드에서 중지 interrupted되었는지 확인하기 위해서 써주는게 낫다고 한다. re-interrupt로 검색하면 나온다.
+                break;
+            }
+        }        
+
+        //thread가 조금 더 유지되게..
+        for (long i = 0; i < 10000000000L; i++) {
+        
+        }
+    }
+}
+
+public class ThreadTest {    
+    public static void main(String[] args) {   
+        MainThread t = new MainThread();
+        System.out.println("시작 전: " + t.getState()); //NEW
+        t.start();        
+        System.out.println("시작 후: " + t.getState()); //RUNNABLE
+        System.out.println("인터럽트 호출 전 인터럽트 값: " + t.isInterrupted()); //false
+        
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+        }
+        t.interrupt();
+        System.out.println("인터럽트 호출 후 상태: " + t.getState()); //TIMED_WAITING (sleep을 호출한 상태라서)
+        System.out.println("인터럽트 호출 후 인터럽트 값: " + t.isInterrupted()); //sleep 상태에서 interrupt를 호출하면 InterruptedException가 발생하고 isInterrupted는 false임
+        
+        //MainThread에서 interrupt 호출 했을 때 체크
+        try {
+            Thread.sleep(1010);
+        } catch (InterruptedException e) {
+        }
+        System.out.println("MainThread에서 인터럽트 호출 후 인터럽트 값: " + t.isInterrupted()); //true: InterruptedException 이후에 Thread.currentThread().interrupt(); 했기 때문에 발생 (타이밍 중요)
+        
+        
+        //RUNNABLE에서 TERMINATED 또는 상태가 변화는지 확인용
+        while (true) {
+            if (t.getState() != Thread.State.RUNNABLE) {
+                System.out.println("end: " + t.getState());
+                break;
+            }
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+            }            
+        }
+    }
+}
+//결과
+/*
+시작 전: NEW
+시작 후: RUNNABLE
+인터럽트 호출 전 인터럽트 값: false
+index: 0
+인터럽트 호출 후 상태: TIMED_WAITING
+인터럽트 호출 후 인터럽트 값: false
+InterruptedException 발생 시 상태: RUNNABLE
+InterruptedException 발생 시 인터럽트 값: false
+InterruptedException 발생!!!
+MainThread에서 인터럽트 호출 후 인터럽트 값: true
+*/
+```
+```java
+//InterruptedException 처리 방법
+//코드에 따라서 다르게 처리도 가능해보인다.
+while (!Thread.currentThread().isInterrupted()) {
+    try {
+        Thread.sleep(1000);
+    } catch (InterruptedException e) {
+        //이렇게 2가지 방법으로 처리가 가능하다.
+        Thread.currentThread().interrupt(); //상위로 변경 된 걸 알려줘야 함        
+        throw new RuntimeException("Thread was interrupted", e); // 상위로 전달
+        //이것도 될 거 같은데 코드에 따라서 경우에 따라서 다를 것으로 보이고 잘 쓰이지 않는 것 같다.
+        break; 
+
+    }
+}
+```
+
+```java
+//Thread 예외 처리: 간단한 샘플
+class MainThread extends Thread {
+    @Override
+    public void run() {        
+        while (!Thread.currentThread().isInterrupted()) {
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                throw new RuntimeException("Thread was interrupted", e); // 상위로 전달
+            }
+        }
+    }
+}
+
+public class ThreadTest {    
+    public static void main(String[] args) {   
+        MainThread t = new MainThread();
+        t.start();        
+        t.setUncaughtExceptionHandler((ttt, e) -> {
+            System.out.println("스레드 이름: " + ttt.getName());
+            System.out.println("예외 처리: " + e.getMessage());
+        });
+        
+        t.interrupt();
+    }
+}
+/* 결과
+스레드 이름: Thread-0
+예외 처리: Thread was interrupted
+*/
+```
 5. daemon 쓰레드
 - 자동 저장 되다가 main이 종료되면 DaemonThreadTest도 같이 종료 된다.
 
