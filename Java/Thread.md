@@ -218,12 +218,10 @@ public class ThreadTest {
 }
 ```
 - wait(), notify() 사용
-  - t1 작업 완료 -> notify() 호출하여 일시 정지 되어 있는 다른 Thread를 실행 대기 상태로 -> t1은 wait()을 호출하여 일시정지로 상태로
+  - t1 작업 완료 -> notify() 호출하여 일시 정지 되어 있는 다른 Thread를 실행 대기 상태로(랜덤) -> t1은 wait()을 호출하여 일시정지로 상태로
   - 동기화 메소드, 동기화 블록 내에서만 사용 가능하다.
-
-추가 확인!!
-왜 synchronized를 해야하는가??
-다른 스레드를 실행 대기로는 랜덤인가??
+  - synchronized 는 공유 객체에서만 동작한다.(synchronized 검색해서 확인)
+  - wait, notify 사용 시 synchronized 가 필수인데 쓰지 않을 경우 IllegalMonitorStateException가 발생한다.
 
 ```java
 //Thread가 번갈아가면서 실행하는 코드
