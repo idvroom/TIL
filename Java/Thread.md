@@ -749,3 +749,9 @@ public static void main(String[] args) {
 ....
 */
 ```
+
+
+- 초기에 이해안 될 때 도움된 링크
+  - [참고1](https://mysetting.io/posts/detail/add92dd5-6350-478d-b597-e810f1e8ca66) <br>
+  - [참고2](https://jongwoon.tistory.com/146) <br>
+
