@@ -100,5 +100,3 @@ INFO : org.zerock.aop.LogAdvice - ==============================================
 INFO : org.zerock.aop.LogAdvice - 12/456 -> logBeforeWithParam
 INFO : org.zerock.aop.LogAdvice - TIME: 6 -> logTime
 ```
-
-![test](Img/PCB.jpg)
